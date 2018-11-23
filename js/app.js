@@ -25,14 +25,15 @@ var Application = {
     $('#loginSubmit').on('click', Application.login);
     $('#registerSubmit').on('click', Application.register);
     $('#formEvent').on('submit', Application.createEvent);
-    $('#create-button').on('click', function () {
-      if (localStorage.token == null) {
-        window.location.href = '#login';
-      }
-    });
   },
 
   initHome: function () {
+    // Menghapus tombol add event ketika user belum login
+    if (localStorage.token != null) {
+      $('#homepage-main').append('<a href="#create-event" role="button" class="float" data-transition="slidedown" id="create-button"><i class="fa fa-plus my-float"></i></a>');
+    }
+
+    $('#event-list').empty();
     var appendEvent = function (event) {
       $('#event-list').append(Mustache.render(eventsTemplate, event));
     }
@@ -151,6 +152,12 @@ var Application = {
           textVisible: true
         });
       },
+      beforeSend: function () {
+        $.mobile.loading('show', {
+          text: 'Please wait while retrieving data...',
+          textVisible: true
+        });
+      },
       success: function (response) {
         event = response.event;
         $('#single-img, #single-title, #single-desc, #single-quota, #single-loc, #single-city, #single-start, #single-end').empty();
@@ -174,7 +181,8 @@ var Application = {
             },
             success: function (response) {
               if (response.msg == null) {
-                $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+                // $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+                alert('Please login first');
               } else {
                 console.log(response.msg);
                 $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Added to wishlist</div>");
@@ -183,7 +191,7 @@ var Application = {
               }
             },
             error: function () {
-              $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+              alert('Please login first');
             }
           });
         });
@@ -199,7 +207,8 @@ var Application = {
             },
             success: function (response) {
               if (response.msg == null) {
-                $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+                // $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+                alert('Please login first');
               } else {
                 console.log(response.msg);
                 $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Registration success</div>");
@@ -208,7 +217,7 @@ var Application = {
               }
             },
             error: function () {
-              $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
+              alert('Please login first');
             }
           });
         });
@@ -235,6 +244,7 @@ var Application = {
         $('#loginField').append("<div class='alert alert-success' role='alert'>" +
           "Login Success" +
           "</div>");
+        Application.initHome();
         Application.initTickets();
         Application.initWishlist();
         window.location.href = '#home';
@@ -265,6 +275,7 @@ var Application = {
         $('#loginField').append("<div class='alert alert-success' role='alert'>" +
           "Login Success" +
           "</div>");
+        Application.initHome();
         Application.initTickets();
         Application.initWishlist();
         window.location.href = '#home';
@@ -279,14 +290,15 @@ var Application = {
   },
 
   createEvent: function () {
-    var appendEvent = function (event) {
-      $('#event-list').append(Mustache.render(eventsTemplate, event));
-    }
-
     var form = $('form')[0]; // You need to use standard javascript object here
     var formData = new FormData(form);
     formData.append('token', localStorage.getItem('token'));
     console.log(formData);
+
+    if (localStorage.token == null) {
+      alert('Please Login First');
+      window.location.href = '#login';
+    }
 
     $.ajax({
       type: "POST",
@@ -299,8 +311,8 @@ var Application = {
           $('#create-error').append("<div class='alert alert-danger' role='alert' id='create-error'>Error</div>");
         } else {
           console.log(response.msg);
-          appendEvent(response.event);
-          window.history.back();
+          Application.initHome();
+          alert('SUCCESS');
         }
       },
       error: function () {
