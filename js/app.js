@@ -11,6 +11,21 @@ var eventsTemplate = "" +
   "</ul>" +
   "</div>";
 
+var wishlistTemplate = "" +
+  "<div class='card text-white bg-dark mb-3'>" +
+  // "<img class='card-img-top' src='https://picsum.photos/300/200/?random' alt='Card image cap'>" +
+  "<div class='card-body'>" +
+  "<h5 class='card-title'>{{title}}</h5>" +
+  "</div>" +
+  "<ul class='list-group list-group-flush'>" +
+  "<li class='list-group-item' style='color: black;'>Location: {{location}}</li>" +
+  "<li class='list-group-item' style='color: black;'>City: {{city}}</li>" +
+  "<li class='list-group-item' style='color: black;'>Time: {{start_time}}</li>" +
+  "</ul>" +
+  "<button type='button' class='btn btn-primary' id='{{id}}''>Event Detail</button>" +
+  "<button type='button' class='btn btn-danger' id='del-{{id}}'>Delete</button>" +
+  "</div>";
+
 var Application = {
   initApplication: function () {
     $(window).load('pageinit', '#home', function () {
@@ -21,6 +36,9 @@ var Application = {
     });
     $(window).load('pageinit', '#tickets', function () {
       Application.initTickets();
+    });
+    $(window).load('pageinit', '#login', function () {
+      Application.initLogin();
     });
     $('#loginSubmit').on('click', Application.login);
     $('#registerSubmit').on('click', Application.register);
@@ -62,13 +80,27 @@ var Application = {
     });
   },
 
+  initLogin: function () {
+    if (localStorage.token != null) {
+      $('#login-form').empty();
+      $('#login-form').append('<button type="button" class="btn btn-danger" id="logout">Logout</button>');
+    }
+
+    // Logout
+    $('#login-form').on('click', '#logout', function () {
+      console.log('logout clicked');
+      localStorage.clear();
+      location.reload();
+    });
+  },
+
   initWishlist: function () {
     if (localStorage.token == null) {
       $('#not-logged-in1').append("<div class='alert alert-danger' role='alert'>You are not logged in.</div>");
     } else {
       $('#not-logged-in1').remove();
-      var appendEvent = function (event) {
-        $('#wishlist-list').append(Mustache.render(eventsTemplate, event));
+      var appendWishlist = function (event) {
+        $('#wishlist-list').append(Mustache.render(wishlistTemplate, event));
       }
 
       $.ajax({
@@ -87,10 +119,24 @@ var Application = {
           $('#wishlist-list').empty();
           console.log(response);
           response.events.forEach(function (event) {
-            appendEvent(event);
+            appendWishlist(event);
             $(document).on('click', '#' + event.id, function (e) {
               Application.initSingle(event.id);
               window.location.href = '#single?id=' + event.id;
+            });
+
+            // Hapus dari wishlist
+            $('#wishlist-list').on('click', '#del-' + event.id, function (e) {
+              $.ajax({
+                type: "DELETE",
+                url: "https://freevent.herokuapp.com/api/wishlist/" + event.id,
+                data: {
+                  token: localStorage.getItem('token'),
+                },
+                success: function (response) {
+                  Application.initWishlist();
+                }
+              });
             });
           });
         },
@@ -107,7 +153,7 @@ var Application = {
     } else {
       $('#not-logged-in').remove();
       var appendTicket = function (ticket) {
-        $('#tickets-list').append("<a href='#' class='list-group-item list-group-item-action'>Ticket ID: #" + ticket.id + ", Event: " + ticket.title + "</a>");
+        $('#tickets-list').append("<a href='#ticket' data-transition='slidedown' class='list-group-item list-group-item-action' id='ticket-" + ticket.ticket_id + "'>Ticket ID: #" + ticket.ticket_id + ", Event: " + ticket.title + "</a>");
       }
 
       $.ajax({
@@ -127,9 +173,9 @@ var Application = {
           console.log(response);
           response.events.forEach(function (event) {
             appendTicket(event);
-            $(document).on('click', '#' + event.id, function (e) {
-              Application.initSingle(event.id);
-              window.location.href = '#single?id=' + event.id;
+            $(document).on('click', '#ticket-' + event.ticket_id, function (e) {
+              Application.initTicket(event.id);
+              // window.location.href = '#single?id=' + event.id;
             });
           });
         },
@@ -170,7 +216,8 @@ var Application = {
         $('#single-start').append('Start: ' + event.start_time);
         $('#single-end').append('End: ' + event.end_time);
 
-        $('#atw').on('click', function () {
+        $('#atw').unbind().on('click', function () {
+          console.log('atw clicked');
           $.ajax({
             type: "POST",
             url: "https://freevent.herokuapp.com/api/wishlist",
@@ -185,7 +232,7 @@ var Application = {
                 alert('Please login first');
               } else {
                 console.log(response.msg);
-                $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Added to wishlist</div>");
+                // $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Added to wishlist</div>");
                 Application.initWishlist();
                 window.location.href = '#wishlist';
               }
@@ -196,7 +243,7 @@ var Application = {
           });
         });
 
-        $('#reg').on('click', function () {
+        $('#reg').unbind().on('click', function () {
           $.ajax({
             type: "POST",
             url: "https://freevent.herokuapp.com/api/tickets",
@@ -211,7 +258,7 @@ var Application = {
                 alert('Please login first');
               } else {
                 console.log(response.msg);
-                $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Registration success</div>");
+                // $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Registration success</div>");
                 Application.initTickets();
                 window.location.href = '#tickets';
               }
@@ -240,13 +287,10 @@ var Application = {
       success: function (data) {
         console.log(data);
         localStorage.token = data.token;
-        $('#loginField').empty();
-        $('#loginField').append("<div class='alert alert-success' role='alert'>" +
-          "Login Success" +
-          "</div>");
-        Application.initHome();
-        Application.initTickets();
-        Application.initWishlist();
+        Application.initApplication();
+        // Application.initHome();
+        // Application.initTickets();
+        // Application.initWishlist();
         window.location.href = '#home';
       },
       error: function () {
@@ -271,13 +315,11 @@ var Application = {
       success: function (response) {
         console.log(response);
         localStorage.token = response.token;
-        $('#loginField').empty();
-        $('#loginField').append("<div class='alert alert-success' role='alert'>" +
-          "Login Success" +
-          "</div>");
-        Application.initHome();
-        Application.initTickets();
-        Application.initWishlist();
+        Application.initApplication();
+        // Application.initLogin();
+        // Application.initHome();
+        // Application.initTickets();
+        // Application.initWishlist();
         window.location.href = '#home';
       },
       error: function () {
@@ -318,6 +360,24 @@ var Application = {
       error: function () {
         alert("Error");
       }
+    });
+  },
+
+  initTicket: function (id) {
+    $.ajax({
+      type: "GET",
+      url: "https://freevent.herokuapp.com/api/tickets/" + id,
+      data: {
+        token: localStorage.getItem('token'),
+      },
+      success: function (response) {
+        event = response.event;
+        $('#ticket-id, #ticket-title, #ticket-loc, #ticket-start').empty();
+        $('#ticket-id').append('Ticket ID: #' + response.ticket_id);
+        $('#ticket-title').append(event.title);
+        $('#ticket-loc').append('Location: ' + event.location + ', ' + event.city);
+        $('#ticket-start').append('Start: ' + event.start_time);
+      },
     });
   },
 

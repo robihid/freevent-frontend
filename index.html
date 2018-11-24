@@ -125,10 +125,10 @@
   <!-- LOGIN -->
   <div data-role="page" id="login">
     <div data-theme="b" data-role="header" style="overflow:hidden;">
-      <h1>Login</h1>
+      <h1>User</h1>
     </div>
 
-    <div role="main" class="ui-content">
+    <div role="main" class="ui-content" id="login-form">
       <div class="text-center" id="loginField">
         <label for="email">Email</label>
         <input type="email" id="emailLogin" name="email" value="">
@@ -203,6 +203,7 @@
     <div role="main" class="ui-content">
       <div id="not-logged-in"></div>
       <div class="list-group" id="tickets-list">
+        <!-- di isi dengan js -->
       </div>
     </div>
 
@@ -219,6 +220,24 @@
   </div>
 
   <!-- SINGLE TICKET -->
+  <div data-role="page" id="ticket" data-dialog="true" data-add-back-btn="true">
+    <div data-theme="b" data-role="header">
+      <h1>Ticket</h1>
+    </div>
+
+    <div role="main" class="ui-content">
+      <div class="card">
+        <div class="card-body">
+          <p id="ticket-id">Ticket ID: #1</p>
+          <h5 class="card-title" id="ticket-title">Event title</h5>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item" id="ticket-loc">Location: </li>
+          <li class="list-group-item" id="ticket-start">Start: </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <script src="js/app.js" type="text/javascript"></script>
   <script>Application.initApplication();</script>
