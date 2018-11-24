@@ -1,6 +1,5 @@
 var eventsTemplate = "" +
   "<div class='card text-white bg-dark mb-3' id='{{id}}'>" +
-  // "<img class='card-img-top' src='https://picsum.photos/300/200/?random' alt='Card image cap'>" +
   "<div class='card-body'>" +
   "<h5 class='card-title'>{{title}}</h5>" +
   "</div>" +
@@ -13,7 +12,6 @@ var eventsTemplate = "" +
 
 var wishlistTemplate = "" +
   "<div class='card text-white bg-dark mb-3'>" +
-  // "<img class='card-img-top' src='https://picsum.photos/300/200/?random' alt='Card image cap'>" +
   "<div class='card-body'>" +
   "<h5 class='card-title'>{{title}}</h5>" +
   "</div>" +
@@ -28,34 +26,49 @@ var wishlistTemplate = "" +
 
 var Application = {
   initApplication: function () {
+    // Initialize homepage
     $(window).load('pageinit', '#home', function () {
       Application.initHome();
     });
+
+    // Initialize wishlist page
     $(window).load('pageinit', '#wishlist', function () {
       Application.initWishlist();
     });
+
+    // Initialize tickets page
     $(window).load('pageinit', '#tickets', function () {
       Application.initTickets();
     });
+
+    // Initialize login/user page
     $(window).load('pageinit', '#login', function () {
       Application.initLogin();
     });
+
+    // Menghandle klik pada tombol login
     $('#loginSubmit').on('click', Application.login);
+
+    // Menghandle klik pada tombol register
     $('#registerSubmit').on('click', Application.register);
+
+    // Menghandle submit form create event
     $('#formEvent').on('submit', Application.createEvent);
   },
 
   initHome: function () {
-    // Menghapus tombol add event ketika user belum login
+    // Menghapus tombol create event ketika user belum login
     if (localStorage.token != null) {
       $('#homepage-main').append('<a href="#create-event" role="button" class="float" data-transition="slidedown" id="create-button"><i class="fa fa-plus my-float"></i></a>');
     }
 
+    // Mengisi event-list yang ada di homepage
     $('#event-list').empty();
     var appendEvent = function (event) {
       $('#event-list').append(Mustache.render(eventsTemplate, event));
     }
 
+    // Mengirim request ke backend untuk mendapatkan semua event
     $.ajax({
       type: "GET",
       url: "https://freevent.herokuapp.com/api/events",
@@ -81,12 +94,13 @@ var Application = {
   },
 
   initLogin: function () {
+    // Ketika user memiliki token, maka halaman login/user diubah menjadi tombol logout
     if (localStorage.token != null) {
       $('#login-form').empty();
       $('#login-form').append('<button type="button" class="btn btn-danger" id="logout">Logout</button>');
     }
 
-    // Logout
+    // Menghandle klik pada tombol logout
     $('#login-form').on('click', '#logout', function () {
       console.log('logout clicked');
       localStorage.clear();
@@ -95,14 +109,16 @@ var Application = {
   },
 
   initWishlist: function () {
+    // Ketika user tidak memiliki token, maka halaman wishlist diisi pemberitahuan bahwa belum login
     if (localStorage.token == null) {
       $('#not-logged-in1').append("<div class='alert alert-danger' role='alert'>You are not logged in.</div>");
-    } else {
+    } else { // Jika memiliki token, maka mengisi wishlist-list dengan event yang didapat dari response dari server
       $('#not-logged-in1').remove();
       var appendWishlist = function (event) {
         $('#wishlist-list').append(Mustache.render(wishlistTemplate, event));
       }
 
+      // Mengirim request ke backend untuk mendapatkan event yang ada di wishlist user
       $.ajax({
         type: "GET",
         url: "https://freevent.herokuapp.com/api/wishlist",
@@ -148,14 +164,16 @@ var Application = {
   },
 
   initTickets: function () {
+    // Ketika user tidak memiliki token, maka halaman tickets diisi pemberitahuan bahwa belum login
     if (localStorage.token == null) {
       $('#not-logged-in').append("<div class='alert alert-danger' role='alert'>You are not logged in.</div>");
-    } else {
+    } else { // Jika memiliki token, maka mengisi tickets-list dengan ticket yang didapat dari response dari server
       $('#not-logged-in').remove();
       var appendTicket = function (ticket) {
         $('#tickets-list').append("<a href='#ticket' data-transition='slidedown' class='list-group-item list-group-item-action' id='ticket-" + ticket.ticket_id + "'>Ticket ID: #" + ticket.ticket_id + ", Event: " + ticket.title + "</a>");
       }
 
+      // Mengirim request ke backend untuk mendapatkan ticket yang dimiliki user
       $.ajax({
         type: "GET",
         url: "https://freevent.herokuapp.com/api/tickets",
@@ -175,7 +193,6 @@ var Application = {
             appendTicket(event);
             $(document).on('click', '#ticket-' + event.ticket_id, function (e) {
               Application.initTicket(event.id);
-              // window.location.href = '#single?id=' + event.id;
             });
           });
         },
@@ -188,7 +205,9 @@ var Application = {
 
   },
 
+  // Method untuk halaman single event
   initSingle: function (id) {
+    // Mengirim request untuk mendapatkan detail setiap event
     $.ajax({
       type: "GET",
       url: "https://freevent.herokuapp.com/api/events/" + id,
@@ -216,6 +235,7 @@ var Application = {
         $('#single-start').append('Start: ' + event.start_time);
         $('#single-end').append('End: ' + event.end_time);
 
+        // Menghandle klik pada tombol atw (Add to Wishlist)
         $('#atw').unbind().on('click', function () {
           console.log('atw clicked');
           $.ajax({
@@ -228,11 +248,9 @@ var Application = {
             },
             success: function (response) {
               if (response.msg == null) {
-                // $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
                 alert('Please login first');
               } else {
                 console.log(response.msg);
-                // $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Added to wishlist</div>");
                 Application.initWishlist();
                 window.location.href = '#wishlist';
               }
@@ -243,6 +261,7 @@ var Application = {
           });
         });
 
+        // Menghandle klik pada tombol register ke event
         $('#reg').unbind().on('click', function () {
           $.ajax({
             type: "POST",
@@ -254,11 +273,9 @@ var Application = {
             },
             success: function (response) {
               if (response.msg == null) {
-                // $('#atw-or-reg').append("<div class='alert alert-danger' role='alert'>Error</div>");
                 alert('Please login first');
               } else {
                 console.log(response.msg);
-                // $('#atw-or-reg').append("<div class='alert alert-success' role='alert'>Registration success</div>");
                 Application.initTickets();
                 window.location.href = '#tickets';
               }
@@ -276,6 +293,7 @@ var Application = {
   },
 
   login: function () {
+    // Mengirim POST request untuk mendapatkan token
     $.ajax({
       type: "POST",
       url: "https://freevent.herokuapp.com/api/user/login",
@@ -288,9 +306,6 @@ var Application = {
         console.log(data);
         localStorage.token = data.token;
         Application.initApplication();
-        // Application.initHome();
-        // Application.initTickets();
-        // Application.initWishlist();
         window.location.href = '#home';
       },
       error: function () {
@@ -303,6 +318,7 @@ var Application = {
   },
 
   register: function () {
+    // Mengirim POST request untuk register + mendapatkan token
     $.ajax({
       type: "POST",
       url: "https://freevent.herokuapp.com/api/user/register",
@@ -316,10 +332,6 @@ var Application = {
         console.log(response);
         localStorage.token = response.token;
         Application.initApplication();
-        // Application.initLogin();
-        // Application.initHome();
-        // Application.initTickets();
-        // Application.initWishlist();
         window.location.href = '#home';
       },
       error: function () {
@@ -328,7 +340,6 @@ var Application = {
           "</div>");
       }
     });
-
   },
 
   createEvent: function () {
@@ -342,15 +353,16 @@ var Application = {
       window.location.href = '#login';
     }
 
+    // Mengirim POST request untuk menambah event ke database
     $.ajax({
       type: "POST",
       url: "https://freevent.herokuapp.com/api/events",
       data: formData,
-      contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
-      processData: false, // NEEDED, DON'T OMIT THIS
+      contentType: false,
+      processData: false,
       success: function (response) {
         if (response.msg == null) {
-          $('#create-error').append("<div class='alert alert-danger' role='alert' id='create-error'>Error</div>");
+          alert('You must be logged in to create an event!');
         } else {
           console.log(response.msg);
           Application.initHome();
@@ -363,7 +375,9 @@ var Application = {
     });
   },
 
+  // Method untuk menampilkan detail tiket
   initTicket: function (id) {
+    // Mengirim GET request untuk mendapatkan detail tiket dengan id tertentu
     $.ajax({
       type: "GET",
       url: "https://freevent.herokuapp.com/api/tickets/" + id,
@@ -378,23 +392,6 @@ var Application = {
         $('#ticket-loc').append('Location: ' + event.location + ', ' + event.city);
         $('#ticket-start').append('Start: ' + event.start_time);
       },
-    });
-  },
-
-  test: function () {
-    $.ajax({
-      type: "GET",
-      url: "https://freevent.herokuapp.com/api/tickets/8",
-      // dataType: "json",
-      data: {
-        token: localStorage.getItem('token'),
-      },
-      success: function (response) {
-        console.log(response);
-      },
-      error: function () {
-        window.location.href = '#login';
-      }
     });
   },
 }
