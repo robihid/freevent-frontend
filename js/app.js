@@ -7,7 +7,8 @@ var eventsTemplate = "" +
   "<li class='list-group-item' style='color: black;'>Location: {{location}}</li>" +
   "<li class='list-group-item' style='color: black;'>City: {{city}}</li>" +
   "<li class='list-group-item' style='color: black;'>Time: {{start_time}}</li>" +
-  "</ul>" +
+  '<span class="badge badge-primary">{{categories}}</span>'
+"</ul>" +
   "</div>";
 
 var wishlistTemplate = "" +
@@ -134,7 +135,7 @@ var Application = {
         success: function (response) {
           $('#wishlist-list').empty();
           console.log(response);
-          response.events.forEach(function (event) {
+          response.fevents.orEach(function (event) {
             appendWishlist(event);
             $(document).on('click', '#' + event.id, function (e) {
               Application.initSingle(event.id);
@@ -217,16 +218,11 @@ var Application = {
           textVisible: true
         });
       },
-      beforeSend: function () {
-        $.mobile.loading('show', {
-          text: 'Please wait while retrieving data...',
-          textVisible: true
-        });
-      },
       success: function (response) {
         event = response.event;
-        $('#single-img, #single-title, #single-desc, #single-quota, #single-loc, #single-city, #single-start, #single-end').empty();
+        $('#single-img, #single-title, #single-desc, #single-quota, #single-loc, #single-city, #single-start, #single-end, #single-categories').empty();
         $('#single-img').attr("src", "https://picsum.photos/300/200/?random"); //+ event.image_url);
+        $('#single-categories').append(event.categories);
         $('#single-title').append(event.title);
         $('#single-desc').append(event.description);
         $('#single-quota').append('Quota: ' + event.quota);
@@ -302,9 +298,9 @@ var Application = {
         email: $('#emailLogin').val(),
         password: $('#passwordLogin').val()
       },
-      success: function (data) {
-        console.log(data);
-        localStorage.token = data.token;
+      success: function (response) {
+        // console.log(response);
+        localStorage.token = response.token;
         Application.initApplication();
         window.location.href = '#home';
       },
@@ -336,7 +332,7 @@ var Application = {
       },
       error: function () {
         $('#loginField').append("<div class='alert alert-danger' role='alert'>" +
-          "Login Failed" +
+          "Register Failed" +
           "</div>");
       }
     });
@@ -370,7 +366,7 @@ var Application = {
         }
       },
       error: function () {
-        alert("Error");
+        alert("Token expired");
       }
     });
   },
