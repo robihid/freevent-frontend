@@ -54,7 +54,7 @@ var Application = {
     $('#registerSubmit').on('click', Application.register);
 
     // Menghandle submit form create event
-    $('#formEvent').on('submit', Application.createEvent);
+    $('#formEvent').unbind().on('submit', Application.createEvent);
   },
 
   initHome: function () {
@@ -135,7 +135,7 @@ var Application = {
         success: function (response) {
           $('#wishlist-list').empty();
           console.log(response);
-          response.fevents.orEach(function (event) {
+          response.events.forEach(function (event) {
             appendWishlist(event);
             $(document).on('click', '#' + event.id, function (e) {
               Application.initSingle(event.id);
@@ -358,16 +358,13 @@ var Application = {
       processData: false,
       success: function (response) {
         if (response.msg == null) {
-          alert('You must be logged in to create an event!');
+          alert('Error');
         } else {
           console.log(response.msg);
           Application.initHome();
           alert('SUCCESS');
         }
       },
-      error: function () {
-        alert("Token expired");
-      }
     });
   },
 
